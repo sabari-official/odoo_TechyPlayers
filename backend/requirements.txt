@@ -1,0 +1,12 @@
+flask
+flask-sqlalchemy
+flask-cors
+mysql-connector-python
+pyjwt
+werkzeug
+python-dotenv
+fastapi
+uvicorn
+bytez
+pydantic
+sqlalchemy
