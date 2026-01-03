@@ -75,6 +75,9 @@ class TripSave(BaseModel):
     budgetType: str
     final_plan: str
 
+class CitySearchQuery(BaseModel):
+    query: str
+
 # =========================
 # AI AGENT FUNCTIONS (FIXED)
 # =========================
@@ -140,6 +143,60 @@ def ai_modify_plan(current_plan: str, instruction: str) -> str:
         return current_plan + f"\n\n[NOTE: AI Modification simulated due to missing API Key. User asked: {instruction}]"
 
 
+def ai_search_cities(query: str) -> list:
+    try:
+        if "******" in BYTEZ_API_KEY:
+            raise Exception("Using dummy API key")
+
+        prompt = f"""
+        You are an AI travel expert. Based on the search query "{query}", suggest 4-6 popular travel destinations (cities or regions).
+        For each destination, provide:
+        - name: Full name with country (e.g., "Kyoto, Japan")
+        - rating: A float between 4.5 and 5.0
+        - type: A category like "Historic", "Romantic", "Urban", "Adventure", etc.
+        - description: A short 1-2 sentence description
+
+        Return the response as a valid JSON array of objects, nothing else.
+        Example:
+        [
+            {{
+                "name": "Kyoto, Japan",
+                "rating": 4.8,
+                "type": "Historic",
+                "description": "Known for its ancient temples and traditional culture."
+            }}
+        ]
+        """
+        response = model.run([
+            {"role": "user", "content": prompt}
+        ])
+        content = response[0]["content"]
+        # Parse JSON
+        import json
+        cities = json.loads(content)
+        # Add img URLs (using Unsplash or placeholder)
+        img_urls = [
+            "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&q=80&w=400"
+        ]
+        for i, city in enumerate(cities):
+            city["img"] = img_urls[i % len(img_urls)]
+        return cities
+    except Exception as e:
+        print(f"AI City Search Error: {e}")
+        # Fallback mock cities
+        return [
+            {"name": "Kyoto, Japan", "rating": 4.8, "type": "Historic", "img": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=400", "description": "Ancient temples and traditional culture."},
+            {"name": "Santorini, Greece", "rating": 4.9, "type": "Romantic", "img": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=400", "description": "Stunning sunsets and white-washed buildings."},
+            {"name": "New York, USA", "rating": 4.7, "type": "Urban", "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=400", "description": "The city that never sleeps."},
+            {"name": "Cape Town, SA", "rating": 4.6, "type": "Adventure", "img": "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&q=80&w=400", "description": "Table Mountain and coastal beauty."}
+        ]
+
+
 # =========================
 # API ROUTES
 # =========================
@@ -156,6 +213,12 @@ def modify_plan(data: PlanModify):
         data.user_instruction
     )
     return {"plan": plan}
+
+
+@app.post("/api/search-cities")
+def search_cities(data: CitySearchQuery):
+    cities = ai_search_cities(data.query)
+    return {"cities": cities}
 
 
 @app.post("/api/save-trip")

@@ -1,17 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Star, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Star, ArrowRight, RefreshCw } from 'lucide-react';
 
 const CitySearch = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [cities, setCities] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Mock Agentic Results
-    const cities = [
-        { id: 1, name: 'Kyoto, Japan', rating: 4.8, type: 'Historic', img: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=400' },
-        { id: 2, name: 'Santorini, Greece', rating: 4.9, type: 'Romantic', img: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=400' },
-        { id: 3, name: 'New York, USA', rating: 4.7, type: 'Urban', img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=400' },
-        { id: 4, name: 'Cape Town, SA', rating: 4.6, type: 'Adventure', img: 'https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&q=80&w=400' },
-    ];
+    useEffect(() => {
+        handleSearch('popular destinations');
+    }, []);
+
+    const handleSearch = async (query = searchTerm) => {
+        if (!query.trim()) return;
+        setIsLoading(true);
+        try {
+            const res = await fetch('http://localhost:8001/api/search-cities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query }),
+            });
+            const data = await res.json();
+            setCities(data.cities);
+        } catch (error) {
+            alert("Error searching cities: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleSearch();
+    };
 
     return (
         <div className="container">
@@ -26,15 +46,18 @@ const CitySearch = () => {
                         placeholder="Search for cities, regions, or vibes..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={handleKeyDown}
                     />
-                    <button className="btn btn-primary">Search</button>
+                    <button className="btn btn-primary" onClick={handleSearch} disabled={isLoading}>
+                        {isLoading ? <RefreshCw className="spin" size={20} /> : 'Search'}
+                    </button>
                 </div>
             </div>
 
             <div className="cities-grid">
                 {cities.map((city, idx) => (
                     <motion.div
-                        key={city.id}
+                        key={city.id || idx}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.1 }}
@@ -48,6 +71,7 @@ const CitySearch = () => {
                                 <h3>{city.name}</h3>
                                 <span className="rating"><Star size={14} fill="gold" stroke="none" /> {city.rating}</span>
                             </div>
+                            <p className="text-secondary" style={{ margin: '0.5rem 0', fontSize: '0.9rem' }}>{city.description}</p>
                             <button className="btn btn-ghost" style={{ width: '100%', marginTop: '1rem', justifyContent: 'space-between' }}>
                                 Explore <ArrowRight size={16} />
                             </button>
