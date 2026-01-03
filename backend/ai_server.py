@@ -217,7 +217,13 @@ def modify_plan(data: PlanModify):
 
 @app.post("/api/search-cities")
 def search_cities(data: CitySearchQuery):
-    cities = ai_search_cities(data.query)
+    # Temporary mock data for testing
+    cities = [
+        {"name": "Kyoto, Japan", "rating": 4.8, "type": "Historic", "img": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=400", "description": "Ancient temples and traditional culture."},
+        {"name": "Santorini, Greece", "rating": 4.9, "type": "Romantic", "img": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&q=80&w=400", "description": "Stunning sunsets and white-washed buildings."},
+        {"name": "New York, USA", "rating": 4.7, "type": "Urban", "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=400", "description": "The city that never sleeps."},
+        {"name": "Cape Town, SA", "rating": 4.6, "type": "Adventure", "img": "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&q=80&w=400", "description": "Table Mountain and coastal beauty."}
+    ]
     return {"cities": cities}
 
 

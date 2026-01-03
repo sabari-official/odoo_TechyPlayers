@@ -20,10 +20,14 @@ const CitySearch = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query }),
             });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
             const data = await res.json();
-            setCities(data.cities);
+            setCities(data.cities || []);
         } catch (error) {
             alert("Error searching cities: " + error.message);
+            setCities([]);
         } finally {
             setIsLoading(false);
         }
